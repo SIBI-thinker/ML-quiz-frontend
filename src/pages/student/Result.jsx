@@ -18,10 +18,13 @@ export default function Result() {
                 setPublished(data.published);
                 if (data.published) setResult(data.result);
             }
+            setLoading(false);
         }
 
         if (!passedResult?.success) {
             loadResult();
+        } else {
+            setLoading(false);
         }
 
         // Poll every 10 seconds until results are published

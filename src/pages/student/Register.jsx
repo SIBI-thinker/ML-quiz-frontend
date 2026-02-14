@@ -122,7 +122,7 @@ export default function Register() {
                         <div>
                             <label className="input-label">Batch Code</label>
                             <input type="text" value={batchCode}
-                                onChange={(e) => { setBatchCode(e.target.value.toUpperCase()); setError(''); }}
+                                onChange={(e) => { setBatchCode(e.target.value.replace(/\s/g, '').toUpperCase()); setError(''); }}
                                 placeholder="Enter code from the board" className="input-field" />
                         </div>
 

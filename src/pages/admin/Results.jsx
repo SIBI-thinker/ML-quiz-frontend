@@ -40,6 +40,20 @@ export default function Results() {
         else showMsg(`❌ ${data.message}`);
     };
 
+    const handleForceExit = async (userId, name) => {
+        if (!confirm(`Force exit "${name}" from quiz? They will be marked as disqualified.`)) return;
+        const data = await apiCall(`/api/admin/force-exit/${userId}`, { method: 'PUT' });
+        if (data.success) { showMsg(`✅ ${data.message}`); loadResults(); }
+        else showMsg(`❌ ${data.message}`);
+    };
+
+    const handleDeleteUser = async (userId, name) => {
+        if (!confirm(`Permanently delete "${name}" and ALL their records? This cannot be undone!`)) return;
+        const data = await apiCall(`/api/admin/user/${userId}`, { method: 'DELETE' });
+        if (data.success) { showMsg(`✅ ${data.message}`); loadResults(); }
+        else showMsg(`❌ ${data.message}`);
+    };
+
     const handleBulkPromote = async () => {
         if (!filters.batch_id) return showMsg('❌ Select a batch first');
         const data = await apiCall('/api/admin/promote-bulk', {
@@ -165,7 +179,13 @@ export default function Results() {
                                         <td className="text-sm text-slate-400">{formatTime(r.time_taken)}</td>
                                         <td className="text-sm">{r.tab_switch_count > 0 ? <span className="text-amber-400">⚠ {r.tab_switch_count}</span> : <span className="text-slate-600">0</span>}</td>
                                         <td>{statusBadge(r.status)}</td>
-                                        <td>{r.status === 'completed' && <button onClick={() => handlePromote(r.user_id)} className="btn btn-sm btn-success">Promote</button>}</td>
+                                        <td>
+                                            <div className="flex gap-1">
+                                                {r.status === 'completed' && <button onClick={() => handlePromote(r.user_id)} className="btn btn-sm btn-success">Promote</button>}
+                                                {r.status === 'started' && <button onClick={() => handleForceExit(r.user_id, r.name)} className="btn btn-sm btn-danger" title="Force exit">⛔ Kick</button>}
+                                                <button onClick={() => handleDeleteUser(r.user_id, r.name)} className="btn btn-sm btn-outline" style={{ color: '#ef4444', borderColor: '#ef4444', fontSize: '0.7rem' }} title="Delete user">🗑️</button>
+                                            </div>
+                                        </td>
                                     </tr>
                                 ))}
                                 {results.length === 0 && (

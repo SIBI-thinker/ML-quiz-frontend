@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import apiCall from '../../api/api';
 
 export default function Ranks() {
     const [searchParams, setSearchParams] = useSearchParams();
+    const navigate = useNavigate();
     const [ranks, setRanks] = useState([]);
     const [batches, setBatches] = useState([]);
     const [batchLabel, setBatchLabel] = useState('All Batches');
@@ -17,6 +18,28 @@ export default function Ranks() {
     const [error, setError] = useState('');
     const [lastUpdated, setLastUpdated] = useState(null);
     const selectedBatchRef = useRef(selectedBatch);
+
+    // Auto-logout countdown (only for logged-in students)
+    const isStudent = !!localStorage.getItem('student_token');
+    const [logoutCountdown, setLogoutCountdown] = useState(isStudent ? 30 : null);
+
+    useEffect(() => {
+        if (logoutCountdown === null) return;
+        if (logoutCountdown <= 0) {
+            // Perform logout
+            localStorage.removeItem('student_token');
+            localStorage.removeItem('student_user');
+            localStorage.removeItem('batch_info');
+            localStorage.removeItem('session_id');
+            localStorage.removeItem('start_time');
+            localStorage.removeItem('duration_minutes');
+            localStorage.removeItem('total_questions');
+            navigate('/');
+            return;
+        }
+        const timer = setTimeout(() => setLogoutCountdown(c => c - 1), 1000);
+        return () => clearTimeout(timer);
+    }, [logoutCountdown, navigate]);
 
     // Keep ref in sync
     useEffect(() => { selectedBatchRef.current = selectedBatch; }, [selectedBatch]);
@@ -141,6 +164,40 @@ export default function Ranks() {
 
     return (
         <div style={{ minHeight: '100vh', background: 'linear-gradient(180deg, #0f172a 0%, #1e1b4b 100%)' }}>
+            {/* Auto-logout countdown banner */}
+            {logoutCountdown !== null && logoutCountdown > 0 && (
+                <div className="logout-banner" style={{
+                    background: 'linear-gradient(90deg, rgba(245,158,11,0.15) 0%, rgba(239,68,68,0.15) 100%)',
+                    borderBottom: '1px solid rgba(245,158,11,0.3)',
+                    padding: '0.625rem 1.5rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.75rem',
+                    fontSize: '0.875rem',
+                    color: '#fbbf24',
+                    animation: 'fadeIn 0.4s ease',
+                }}>
+                    <span>⏱️ Auto-logout in <strong style={{ fontSize: '1rem' }}>{logoutCountdown}s</strong></span>
+                    <button
+                        onClick={() => {
+                            setLogoutCountdown(0);
+                        }}
+                        style={{
+                            background: 'rgba(239,68,68,0.2)',
+                            border: '1px solid rgba(239,68,68,0.4)',
+                            color: '#fca5a5',
+                            padding: '0.25rem 0.75rem',
+                            borderRadius: '999px',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                        }}
+                    >
+                        Logout Now
+                    </button>
+                </div>
+            )}
             {/* Header */}
             <header style={{ textAlign: 'center', paddingTop: '2rem', paddingBottom: '1rem', paddingLeft: '1rem', paddingRight: '1rem' }}>
                 <h1 className="page-title" style={{ fontSize: 'clamp(1.5rem, 5vw, 2.25rem)' }}>🏆 Quiz Rankings</h1>

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import apiCall from '../../api/api';
+import { getQuizConfig } from '../../api/quizConfig';
 
 export default function Register() {
     const navigate = useNavigate();
@@ -14,6 +15,20 @@ export default function Register() {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [checking, setChecking] = useState(false);
+    const [quizTitle, setQuizTitle] = useState('Quiz Challenge');
+    const [configLoading, setConfigLoading] = useState(true);
+
+    // Fetch config — redirect to team page if team mode
+    useEffect(() => {
+        getQuizConfig(true).then(config => {
+            if (config.quiz_title) setQuizTitle(config.quiz_title);
+            if (config.registration_type === 'team') {
+                navigate('/student/team-register', { replace: true });
+                return;
+            }
+            setConfigLoading(false);
+        });
+    }, [navigate]);
 
     // Redirect if already logged in
     useEffect(() => {
@@ -32,7 +47,7 @@ export default function Register() {
         setChecking(true);
         const timer = setTimeout(async () => {
             const data = await apiCall(
-                `/api/student/check-availability?register_id=${registerId}&mobile=${mobile}&batch_code=${batchCode}`,
+                `/api/student/check-availability?register_id=${encodeURIComponent(registerId)}&mobile=${encodeURIComponent(mobile)}&batch_code=${encodeURIComponent(batchCode)}`,
                 { auth: false }
             );
             setIsAvailable(data.available ?? null);
@@ -74,6 +89,14 @@ export default function Register() {
         setLoading(false);
     }, [name, registerId, college, mobile, batchCode, navigate]);
 
+    if (configLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)' }}>
+                <div className="spinner spinner-lg" />
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)' }}>
             <div className="w-full max-w-md animate-fade-in">
@@ -85,7 +108,7 @@ export default function Register() {
                             <path d="M9 10h6" /><path d="M9 14h4" />
                         </svg>
                     </div>
-                    <h1 className="page-title" style={{ fontSize: '1.875rem' }}>ML Quiz Challenge</h1>
+                    <h1 className="page-title" style={{ fontSize: '1.875rem' }}>{quizTitle}</h1>
                     <p className="page-subtitle mt-2">Enter your details to join the quiz</p>
                 </div>
 
@@ -144,7 +167,6 @@ export default function Register() {
 
                 <div className="mt-6 text-center space-y-2">
                     <Link to="/ranks" className="text-sm text-blue-400 hover:underline block">📊 View Rankings</Link>
-                    <Link to="/admin/login" className="text-sm text-gray-500 hover:text-gray-400 block">Admin Login →</Link>
                 </div>
             </div>
         </div>

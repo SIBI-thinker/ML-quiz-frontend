@@ -222,7 +222,15 @@ export default function Quiz() {
             <main className="flex-1 flex items-center justify-center p-4 sm:p-6">
                 <div className="w-full max-w-2xl animate-fade-in" key={currentIndex}>
                     <div className="glass-card-static p-6 sm:p-8 mb-6">
-                        <p className="text-xs font-semibold text-blue-400 uppercase tracking-wider mb-3">Question {currentIndex + 1}</p>
+                        <div className="flex items-center justify-between mb-3">
+                            <p className="text-xs font-semibold text-blue-400 uppercase tracking-wider">Question {currentIndex + 1}</p>
+                            <div className="flex items-center gap-2">
+                                <span className={`badge ${question?.difficulty === 'hard' ? 'badge-red' : question?.difficulty === 'medium' ? 'badge-yellow' : 'badge-green'}`}>
+                                    {question?.difficulty === 'hard' ? '🔴 Hard' : question?.difficulty === 'medium' ? '🟡 Medium' : '🟢 Easy'}
+                                </span>
+                                <span className="badge badge-blue">{question?.marks || 1} mark{(question?.marks || 1) > 1 ? 's' : ''}</span>
+                            </div>
+                        </div>
                         <h2 className="text-lg sm:text-xl font-semibold text-white leading-relaxed">{question?.text}</h2>
                     </div>
 

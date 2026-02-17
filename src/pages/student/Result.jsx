@@ -39,11 +39,12 @@ export default function Result() {
     }, [passedResult]);
 
     const score = result?.score ?? 0;
+    const totalMarks = result?.total_marks ?? result?.total_questions ?? 0;
     const total = result?.total_questions ?? 0;
     const timeTaken = result?.time_taken ?? 0;
     const rank = result?.rank ?? null;
     const status = result?.status ?? 'completed';
-    const pct = total > 0 ? Math.round((score / total) * 100) : 0;
+    const pct = totalMarks > 0 ? Math.round((score / totalMarks) * 100) : 0;
 
     const formatTime = (s) => `${Math.floor(s / 60)}m ${s % 60}s`;
 
@@ -81,8 +82,8 @@ export default function Result() {
                         <div className="text-5xl font-bold" style={{
                             background: pct >= 80 ? 'var(--gradient-success)' : pct >= 50 ? 'var(--gradient-primary)' : 'var(--gradient-danger)',
                             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-                        }}>{score}/{total}</div>
-                        <p className="text-slate-400 text-sm mt-1">{pct}% correct</p>
+                        }}>{score}/{totalMarks}</div>
+                        <p className="text-slate-400 text-sm mt-1">{pct}% • {total} questions</p>
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}>
@@ -112,8 +113,7 @@ export default function Result() {
                 )}
 
                 <div className="space-y-3">
-                    <Link to="/ranks" className="btn btn-primary btn-lg w-full">📊 View Full Rankings</Link>
-                    <button onClick={handleLogout} className="btn btn-outline btn-lg w-full">← Back to Home</button>
+                    <Link to="/student/feedback" className="btn btn-primary btn-lg w-full">📝 Give Feedback</Link>
                 </div>
             </div>
         </div>

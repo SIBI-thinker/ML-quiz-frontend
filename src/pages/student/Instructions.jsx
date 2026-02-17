@@ -34,7 +34,6 @@ export default function Instructions() {
         { icon: '🚫', text: 'Do not switch tabs — you will be warned and tracked.' },
         { icon: '⏱️', text: `Total time: ${batch?.duration_minutes || 15} minutes. Timer is non-pausable.` },
         { icon: '✅', text: 'Each question has only one correct answer.' },
-        { icon: '⏩', text: 'No going back to previous questions.' },
         { icon: '💾', text: 'Your answers are auto-saved after each question.' },
         { icon: '⏰', text: 'If the timer runs out, your quiz auto-submits.' },
         { icon: '📵', text: 'The quiz will run in fullscreen mode.' },

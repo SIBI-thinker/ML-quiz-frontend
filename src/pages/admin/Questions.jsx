@@ -7,17 +7,19 @@ export default function Questions() {
     const [total, setTotal] = useState(0);
     const [currentPage, setCurrentPage] = useState(1);
     const [filterRound, setFilterRound] = useState('');
+    const [filterDifficulty, setFilterDifficulty] = useState('');
     const [showForm, setShowForm] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [form, setForm] = useState({
         question_text: '', option_a: '', option_b: '', option_c: '', option_d: '',
-        correct_option: 'A', round: 1, batch_tag: '',
+        correct_option: 'A', difficulty: 'easy', marks: 1, round: 1, batch_tag: '',
     });
     const [message, setMessage] = useState('');
 
     const loadQuestions = async (page = 1) => {
         let url = `/api/admin/questions?page=${page}&limit=20`;
         if (filterRound) url += `&round=${filterRound}`;
+        if (filterDifficulty) url += `&difficulty=${filterDifficulty}`;
 
         const data = await apiCall(url);
         if (data.success) {
@@ -27,10 +29,10 @@ export default function Questions() {
         }
     };
 
-    useEffect(() => { loadQuestions(); }, [filterRound]);
+    useEffect(() => { loadQuestions(); }, [filterRound, filterDifficulty]);
 
     const resetForm = () => {
-        setForm({ question_text: '', option_a: '', option_b: '', option_c: '', option_d: '', correct_option: 'A', round: 1, batch_tag: '' });
+        setForm({ question_text: '', option_a: '', option_b: '', option_c: '', option_d: '', correct_option: 'A', difficulty: 'easy', marks: 1, round: 1, batch_tag: '' });
         setEditingId(null);
         setShowForm(false);
     };
@@ -58,6 +60,7 @@ export default function Questions() {
         setForm({
             question_text: q.question_text, option_a: q.option_a, option_b: q.option_b,
             option_c: q.option_c, option_d: q.option_d, correct_option: q.correct_option,
+            difficulty: q.difficulty || 'easy', marks: q.marks || 1,
             round: q.round, batch_tag: q.batch_tag || '',
         });
         setEditingId(q.id);
@@ -91,6 +94,12 @@ export default function Questions() {
                             <option value="">All Rounds</option>
                             <option value="1">Round 1</option>
                             <option value="2">Round 2</option>
+                        </select>
+                        <select value={filterDifficulty} onChange={(e) => setFilterDifficulty(e.target.value)} className="input-field" style={{ width: 'auto' }}>
+                            <option value="">All Difficulty</option>
+                            <option value="easy">🟢 Easy</option>
+                            <option value="medium">🟡 Medium</option>
+                            <option value="hard">🔴 Hard</option>
                         </select>
                         <span className="text-sm text-slate-500">{total} questions</span>
                     </div>
@@ -128,6 +137,25 @@ export default function Questions() {
                                         </select>
                                     </div>
                                     <div>
+                                        <label className="input-label">Difficulty</label>
+                                        <select value={form.difficulty} onChange={(e) => {
+                                            const diff = e.target.value;
+                                            updateField('difficulty', diff);
+                                            const defaultMarks = { easy: 1, medium: 2, hard: 3 };
+                                            updateField('marks', defaultMarks[diff]);
+                                        }} className="input-field">
+                                            <option value="easy">🟢 Easy</option>
+                                            <option value="medium">🟡 Medium</option>
+                                            <option value="hard">🔴 Hard</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="input-label">Marks</label>
+                                        <input type="number" value={form.marks} onChange={(e) => updateField('marks', Number(e.target.value))} className="input-field" min={1} max={10} />
+                                    </div>
+                                </div>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}>
+                                    <div>
                                         <label className="input-label">Round</label>
                                         <select value={form.round} onChange={(e) => updateField('round', Number(e.target.value))} className="input-field">
                                             <option value={1}>Round 1</option>
@@ -153,7 +181,7 @@ export default function Questions() {
                     <div style={{ overflowX: 'auto' }}>
                         <table className="data-table">
                             <thead>
-                                <tr><th>#</th><th>Question</th><th>Answer</th><th>Round</th><th>Actions</th></tr>
+                                <tr><th>#</th><th>Question</th><th>Answer</th><th>Difficulty</th><th>Marks</th><th>Round</th><th>Actions</th></tr>
                             </thead>
                             <tbody>
                                 {questions.map((q, i) => (
@@ -161,6 +189,10 @@ export default function Questions() {
                                         <td className="text-slate-500 text-sm">{(currentPage - 1) * 20 + i + 1}</td>
                                         <td className="text-white text-sm" style={{ maxWidth: 400 }}>{q.question_text}</td>
                                         <td><span className="badge badge-green">{q.correct_option}</span></td>
+                                        <td><span className={`badge ${q.difficulty === 'hard' ? 'badge-red' : q.difficulty === 'medium' ? 'badge-yellow' : 'badge-green'}`}>
+                                            {q.difficulty === 'hard' ? '🔴 Hard' : q.difficulty === 'medium' ? '🟡 Medium' : '🟢 Easy'}
+                                        </span></td>
+                                        <td><span className="badge badge-blue">{q.marks || 1}</span></td>
                                         <td><span className="badge badge-purple">R{q.round}</span></td>
                                         <td>
                                             <div className="flex gap-2">
@@ -171,7 +203,7 @@ export default function Questions() {
                                     </tr>
                                 ))}
                                 {questions.length === 0 && (
-                                    <tr><td colSpan={5} className="text-center text-slate-500" style={{ padding: '2rem' }}>No questions yet</td></tr>
+                                    <tr><td colSpan={7} className="text-center text-slate-500" style={{ padding: '2rem' }}>No questions yet</td></tr>
                                 )}
                             </tbody>
                         </table>

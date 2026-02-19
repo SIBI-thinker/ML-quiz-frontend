@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import { Link } from 'react-router-dom';
 import apiCall, { BASE_URL } from '../../api/api';
 
@@ -9,6 +9,7 @@ export default function Results() {
     const [filters, setFilters] = useState({ batch_id: '', college: '', status: '', round: '' });
     const [topN, setTopN] = useState(5);
     const [message, setMessage] = useState('');
+    const [expandedTeam, setExpandedTeam] = useState(null);
 
     const loadBatches = async () => {
         const data = await apiCall('/api/admin/batch/list');
@@ -170,23 +171,61 @@ export default function Results() {
                             </thead>
                             <tbody>
                                 {results.map((r) => (
-                                    <tr key={r.user_id} className={r.rank <= 3 ? ['', 'rank-gold', 'rank-silver', 'rank-bronze'][r.rank] : ''}>
-                                        <td className="font-bold text-sm">{r.rank <= 3 ? ['', '🥇', '🥈', '🥉'][r.rank] : `#${r.rank}`}</td>
-                                        <td className="text-white text-sm font-medium">{r.name}</td>
-                                        <td className="text-sm" style={{ fontFamily: 'monospace', color: '#60a5fa' }}>{r.register_id}</td>
-                                        <td className="text-sm text-slate-400" style={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.college}</td>
-                                        <td className="font-semibold text-sm">{r.score}/{r.total_questions}</td>
-                                        <td className="text-sm text-slate-400">{formatTime(r.time_taken)}</td>
-                                        <td className="text-sm">{r.tab_switch_count > 0 ? <span className="text-amber-400">⚠ {r.tab_switch_count}</span> : <span className="text-slate-600">0</span>}</td>
-                                        <td>{statusBadge(r.status)}</td>
-                                        <td>
-                                            <div className="flex gap-1">
-                                                {r.status === 'completed' && <button onClick={() => handlePromote(r.user_id)} className="btn btn-sm btn-success">Promote</button>}
-                                                {r.status === 'started' && <button onClick={() => handleForceExit(r.user_id, r.name)} className="btn btn-sm btn-danger" title="Force exit">⛔ Kick</button>}
-                                                <button onClick={() => handleDeleteUser(r.user_id, r.name)} className="btn btn-sm btn-outline" style={{ color: '#ef4444', borderColor: '#ef4444', fontSize: '0.7rem' }} title="Delete user">🗑️</button>
-                                            </div>
-                                        </td>
-                                    </tr>
+                                    <Fragment key={r.user_id}>
+                                        <tr className={r.rank <= 3 ? ['', 'rank-gold', 'rank-silver', 'rank-bronze'][r.rank] : ''}
+                                            style={r.team_name ? { cursor: 'pointer' } : {}}
+                                            onClick={() => r.team_name && setExpandedTeam(expandedTeam === r.user_id ? null : r.user_id)}>
+                                            <td className="font-bold text-sm">{r.rank <= 3 ? ['', '🥇', '🥈', '🥉'][r.rank] : `#${r.rank}`}</td>
+                                            <td className="text-white text-sm font-medium">
+                                                {r.team_name ? (
+                                                    <div>
+                                                        <span style={{ color: '#a78bfa', fontWeight: 600 }}>👥 {r.team_name}</span>
+                                                        <br />
+                                                        <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{r.name} (Leader)</span>
+                                                        {expandedTeam !== r.user_id && r.team_members?.length > 0 && (
+                                                            <span style={{ fontSize: '0.65rem', color: '#64748b', marginLeft: '0.5rem' }}>+{r.team_members.length} members ▼</span>
+                                                        )}
+                                                    </div>
+                                                ) : r.name}
+                                            </td>
+                                            <td className="text-sm" style={{ fontFamily: 'monospace', color: '#60a5fa' }}>{r.register_id}</td>
+                                            <td className="text-sm text-slate-400" style={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.college}</td>
+                                            <td className="font-semibold text-sm">{r.score}/{r.total_questions}</td>
+                                            <td className="text-sm text-slate-400">{formatTime(r.time_taken)}</td>
+                                            <td className="text-sm">{r.tab_switch_count > 0 ? <span className="text-amber-400">⚠ {r.tab_switch_count}</span> : <span className="text-slate-600">0</span>}</td>
+                                            <td>{statusBadge(r.status)}</td>
+                                            <td>
+                                                <div className="flex gap-1">
+                                                    {r.status === 'completed' && <button onClick={(e) => { e.stopPropagation(); handlePromote(r.user_id); }} className="btn btn-sm btn-success">Promote</button>}
+                                                    {r.status === 'started' && <button onClick={(e) => { e.stopPropagation(); handleForceExit(r.user_id, r.name); }} className="btn btn-sm btn-danger" title="Force exit">⛔ Kick</button>}
+                                                    <button onClick={(e) => { e.stopPropagation(); handleDeleteUser(r.user_id, r.name); }} className="btn btn-sm btn-outline" style={{ color: '#ef4444', borderColor: '#ef4444', fontSize: '0.7rem' }} title="Delete user">🗑️</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {/* Expanded team members row */}
+                                        {expandedTeam === r.user_id && r.team_members?.length > 0 && (
+                                            <tr>
+                                                <td colSpan={9} style={{ padding: 0, background: 'rgba(139, 92, 246, 0.05)', borderLeft: '3px solid #a78bfa' }}>
+                                                    <div style={{ padding: '0.75rem 1.5rem' }}>
+                                                        <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#a78bfa', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                                            👥 Team Members
+                                                        </div>
+                                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '0.5rem' }}>
+                                                            {r.team_members.map((m, i) => (
+                                                                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.375rem 0.75rem', borderRadius: '0.375rem', background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.15)' }}>
+                                                                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#64748b', minWidth: '1.25rem' }}>{m.order || i + 1}.</span>
+                                                                    <div>
+                                                                        <div style={{ fontSize: '0.8125rem', color: '#e2e8f0', fontWeight: 500 }}>{m.name}</div>
+                                                                        {m.reg_id && <div style={{ fontSize: '0.7rem', fontFamily: 'monospace', color: '#60a5fa' }}>{m.reg_id}</div>}
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </Fragment>
                                 ))}
                                 {results.length === 0 && (
                                     <tr><td colSpan={9} className="text-center text-slate-500" style={{ padding: '2rem' }}>No results yet</td></tr>

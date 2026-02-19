@@ -40,10 +40,10 @@ export default function Instructions() {
     ];
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)' }}>
+        <div className="min-h-screen flex items-center justify-center p-4 student-bg">
             <div className="w-full max-w-lg animate-fade-in">
                 <div className="text-center mb-6">
-                    <h1 className="page-title" style={{ fontSize: '1.5rem' }}>Welcome, {user?.name || 'Student'}!</h1>
+                    <h1 className="page-title">Welcome, {user?.name || 'Student'}!</h1>
                     <p className="page-subtitle mt-1">{batch?.label || 'Quiz'} • {batch?.duration_minutes || 15} minutes</p>
                 </div>
 
@@ -55,8 +55,8 @@ export default function Instructions() {
 
                     <div className="space-y-3 mb-6">
                         {rules.map((rule, i) => (
-                            <div key={i} className="flex items-start gap-3 text-sm">
-                                <span className="text-lg flex-shrink-0">{rule.icon}</span>
+                            <div key={i} className="flex items-start gap-3 text-base">
+                                <span className="text-xl flex-shrink-0">{rule.icon}</span>
                                 <span className="text-slate-300">{rule.text}</span>
                             </div>
                         ))}
@@ -70,9 +70,13 @@ export default function Instructions() {
 
                     {error && <div className="msg-error mb-4">{error}</div>}
 
-                    <button onClick={handleStart} disabled={loading} className="btn btn-success btn-lg w-full">
+                    <button onClick={handleStart} disabled={loading} className="btn btn-success btn-lg w-full btn-shine">
                         {loading ? <><span className="spinner" /> Starting...</> : '🚀 Start Quiz'}
                     </button>
+
+                    <p style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '1rem', color: '#ffffff', fontWeight: 'bold', opacity: 1 }}>
+                        For any help, please call the event coordinator.
+                    </p>
                 </div>
             </div>
         </div>

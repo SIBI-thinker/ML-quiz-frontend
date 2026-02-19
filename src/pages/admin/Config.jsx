@@ -23,8 +23,17 @@ export default function Config() {
     const [message, setMessage] = useState('');
     const [loading, setLoading] = useState(true);
 
+    // Feedback questions state
+    const [feedbackQuestions, setFeedbackQuestions] = useState([]);
+    const [newFbQuestion, setNewFbQuestion] = useState({ question_text: '', question_type: 'rating', display_order: 1 });
+    const [fbSaving, setFbSaving] = useState(false);
+    const [fbMessage, setFbMessage] = useState('');
+    const [editingFbId, setEditingFbId] = useState(null);
+    const [editingFbText, setEditingFbText] = useState('');
+
     useEffect(() => {
         loadConfig();
+        loadFeedbackQuestions();
     }, []);
 
     const loadConfig = async () => {
@@ -51,6 +60,53 @@ export default function Config() {
             }
         }
         setLoading(false);
+    };
+
+    const loadFeedbackQuestions = async () => {
+        const data = await apiCall('/api/admin/feedback-questions');
+        if (data.success) setFeedbackQuestions(data.questions || []);
+    };
+
+    const handleAddFbQuestion = async () => {
+        if (!newFbQuestion.question_text.trim()) return setFbMessage('❌ Question text is required');
+        setFbSaving(true);
+        const data = await apiCall('/api/admin/feedback-questions', {
+            method: 'POST',
+            body: newFbQuestion,
+        });
+        if (data.success) {
+            setNewFbQuestion({ question_text: '', question_type: 'rating', display_order: feedbackQuestions.length + 1 });
+            setFbMessage('✅ Question added');
+            loadFeedbackQuestions();
+        } else {
+            setFbMessage(`❌ ${data.message}`);
+        }
+        setFbSaving(false);
+        setTimeout(() => setFbMessage(''), 2500);
+    };
+
+    const handleToggleFbActive = async (q) => {
+        await apiCall(`/api/admin/feedback-questions/${q.id}`, {
+            method: 'PUT',
+            body: { is_active: !q.is_active },
+        });
+        loadFeedbackQuestions();
+    };
+
+    const handleDeleteFbQuestion = async (id) => {
+        if (!confirm('Delete this feedback question? Existing answers will be removed.')) return;
+        await apiCall(`/api/admin/feedback-questions/${id}`, { method: 'DELETE' });
+        loadFeedbackQuestions();
+    };
+
+    const handleSaveFbEdit = async (id) => {
+        if (!editingFbText.trim()) return;
+        await apiCall(`/api/admin/feedback-questions/${id}`, {
+            method: 'PUT',
+            body: { question_text: editingFbText },
+        });
+        setEditingFbId(null);
+        loadFeedbackQuestions();
     };
 
     const handleFileSelect = (type, file) => {
@@ -284,6 +340,101 @@ export default function Config() {
                             </div>
                         )}
                     </div>
+                </div>
+
+                {/* Feedback Questions Card */}
+                <div className="config-card">
+                    <h3 className="config-card-title">💬 Feedback Questions</h3>
+                    <p style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '1rem' }}>
+                        Add questions shown after quiz. Two types: ⭐ Rating (1-5 stars) and 📝 Paragraph (text answer).
+                    </p>
+
+                    {/* Existing Questions */}
+                    {feedbackQuestions.length > 0 && (
+                        <div style={{ marginBottom: '1rem' }}>
+                            {feedbackQuestions.map((q, i) => (
+                                <div key={q.id} style={{
+                                    display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem',
+                                    borderRadius: '0.5rem', marginBottom: '0.5rem',
+                                    background: q.is_active ? 'rgba(59, 130, 246, 0.08)' : 'rgba(100, 116, 139, 0.08)',
+                                    border: `1px solid ${q.is_active ? 'rgba(59, 130, 246, 0.2)' : 'rgba(100, 116, 139, 0.15)'}`,
+                                    opacity: q.is_active ? 1 : 0.6,
+                                }}>
+                                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', minWidth: '1.5rem' }}>
+                                        {i + 1}.
+                                    </span>
+                                    <span style={{ fontSize: '1.25rem', minWidth: '1.5rem' }}>
+                                        {q.question_type === 'rating' ? '⭐' : '📝'}
+                                    </span>
+                                    <div style={{ flex: 1 }}>
+                                        {editingFbId === q.id ? (
+                                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                                <input className="input-field" value={editingFbText}
+                                                    onChange={(e) => setEditingFbText(e.target.value)}
+                                                    onKeyDown={(e) => e.key === 'Enter' && handleSaveFbEdit(q.id)}
+                                                    style={{ flex: 1, padding: '0.375rem 0.5rem', fontSize: '0.8125rem' }}
+                                                    autoFocus />
+                                                <button className="btn btn-success btn-sm" onClick={() => handleSaveFbEdit(q.id)}>Save</button>
+                                                <button className="btn btn-ghost btn-sm" onClick={() => setEditingFbId(null)}>Cancel</button>
+                                            </div>
+                                        ) : (
+                                            <span style={{ fontSize: '0.8125rem', color: '#e2e8f0', cursor: 'pointer' }}
+                                                onClick={() => { setEditingFbId(q.id); setEditingFbText(q.question_text); }}>
+                                                {q.question_text}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <span className={`badge ${q.question_type === 'rating' ? 'badge-yellow' : 'badge-blue'}`}
+                                        style={{ fontSize: '0.65rem' }}>
+                                        {q.question_type}
+                                    </span>
+                                    <button onClick={() => handleToggleFbActive(q)}
+                                        className={`btn btn-sm ${q.is_active ? 'btn-outline' : 'btn-success'}`}
+                                        style={{ fontSize: '0.65rem', padding: '0.2rem 0.5rem' }}>
+                                        {q.is_active ? 'Disable' : 'Enable'}
+                                    </button>
+                                    <button onClick={() => handleDeleteFbQuestion(q.id)}
+                                        className="btn btn-sm btn-outline"
+                                        style={{ color: '#ef4444', borderColor: '#ef4444', fontSize: '0.65rem', padding: '0.2rem 0.5rem' }}>
+                                        🗑️
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {feedbackQuestions.length === 0 && (
+                        <div style={{ textAlign: 'center', padding: '1.5rem', color: '#64748b', fontSize: '0.8125rem', marginBottom: '1rem' }}>
+                            No feedback questions yet. Add one below.
+                        </div>
+                    )}
+
+                    {/* Add New Question */}
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+                        <div style={{ flex: 1, minWidth: '200px' }}>
+                            <label className="input-label">New Question</label>
+                            <input className="input-field" placeholder="e.g. How was the quiz experience?"
+                                value={newFbQuestion.question_text}
+                                onChange={(e) => setNewFbQuestion(q => ({ ...q, question_text: e.target.value }))} />
+                        </div>
+                        <div style={{ minWidth: '130px' }}>
+                            <label className="input-label">Type</label>
+                            <select className="input-field" value={newFbQuestion.question_type}
+                                onChange={(e) => setNewFbQuestion(q => ({ ...q, question_type: e.target.value }))}>
+                                <option value="rating">⭐ Rating</option>
+                                <option value="paragraph">📝 Paragraph</option>
+                            </select>
+                        </div>
+                        <button className="btn btn-primary btn-sm" onClick={handleAddFbQuestion} disabled={fbSaving}
+                            style={{ height: '38px', whiteSpace: 'nowrap' }}>
+                            {fbSaving ? '...' : '+ Add'}
+                        </button>
+                    </div>
+                    {fbMessage && (
+                        <div className={fbMessage.startsWith('✅') ? 'msg-success' : 'msg-error'} style={{ marginTop: '0.5rem', fontSize: '0.8125rem' }}>
+                            {fbMessage}
+                        </div>
+                    )}
                 </div>
 
                 {/* Save */}

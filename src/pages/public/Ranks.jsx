@@ -163,7 +163,7 @@ export default function Ranks() {
     const isAllBatches = !selectedBatch;
 
     return (
-        <div style={{ minHeight: '100vh', background: 'linear-gradient(180deg, #0f172a 0%, #1e1b4b 100%)' }}>
+        <div className="student-bg">
             {/* Auto-logout countdown banner */}
             {logoutCountdown !== null && logoutCountdown > 0 && (
                 <div className="logout-banner" style={{
@@ -174,11 +174,11 @@ export default function Ranks() {
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: '0.75rem',
-                    fontSize: '0.875rem',
+                    fontSize: '1rem',
                     color: '#fbbf24',
                     animation: 'fadeIn 0.4s ease',
                 }}>
-                    <span>⏱️ Auto-logout in <strong style={{ fontSize: '1rem' }}>{logoutCountdown}s</strong></span>
+                    <span>⏱️ Auto-logout in <strong style={{ fontSize: '1.25rem' }}>{logoutCountdown}s</strong></span>
                     <button
                         onClick={() => {
                             setLogoutCountdown(0);
@@ -189,7 +189,7 @@ export default function Ranks() {
                             color: '#fca5a5',
                             padding: '0.25rem 0.75rem',
                             borderRadius: '999px',
-                            fontSize: '0.75rem',
+                            fontSize: '0.875rem',
                             fontWeight: 600,
                             cursor: 'pointer',
                         }}
@@ -200,9 +200,9 @@ export default function Ranks() {
             )}
             {/* Header */}
             <header style={{ textAlign: 'center', paddingTop: '2rem', paddingBottom: '1rem', paddingLeft: '1rem', paddingRight: '1rem' }}>
-                <h1 className="page-title" style={{ fontSize: 'clamp(1.5rem, 5vw, 2.25rem)' }}>🏆 Quiz Rankings</h1>
+                <h1 className="page-title" style={{ fontSize: 'clamp(2rem, 5vw, 3rem)' }}>🏆 Quiz Rankings</h1>
                 <p className="page-subtitle" style={{ marginTop: '0.5rem' }}>{batchLabel} • {total} participants</p>
-                {lastUpdated && <p style={{ fontSize: '0.75rem', color: '#475569', marginTop: '0.25rem' }}>Last updated {lastUpdated.toLocaleTimeString()}</p>}
+                {lastUpdated && <p style={{ fontSize: '0.875rem', color: '#475569', marginTop: '0.25rem' }}>Last updated {lastUpdated.toLocaleTimeString()}</p>}
             </header>
 
             <div className="page-container" style={{ paddingTop: 0 }}>
@@ -218,7 +218,7 @@ export default function Ranks() {
                             </svg>
                             {searchQuery && (
                                 <button onClick={clearSearch}
-                                    style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: '#64748b', cursor: 'pointer', background: 'none', border: 'none', fontSize: '0.875rem' }}>✕</button>
+                                    style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: '#64748b', cursor: 'pointer', background: 'none', border: 'none', fontSize: '1rem' }}>✕</button>
                             )}
                         </div>
                         <select value={selectedBatch} onChange={handleBatchChange} className="input-field" style={{ width: 'auto', minWidth: 180 }}>
@@ -232,7 +232,7 @@ export default function Ranks() {
                         </select>
                     </div>
                     {isSearching && (
-                        <p style={{ fontSize: '0.75rem', color: '#60a5fa', marginTop: '0.5rem' }}>
+                        <p style={{ fontSize: '0.875rem', color: '#60a5fa', marginTop: '0.5rem' }}>
                             Showing search results for "{searchQuery}" —{' '}
                             <button onClick={clearSearch} style={{ textDecoration: 'underline', background: 'none', border: 'none', color: '#60a5fa', cursor: 'pointer', font: 'inherit' }}>Clear</button>
                         </p>
@@ -242,17 +242,17 @@ export default function Ranks() {
                 {loading ? (
                     <div style={{ textAlign: 'center', padding: '4rem 0' }}>
                         <div className="spinner spinner-lg" style={{ borderTopColor: '#3b82f6', borderColor: 'rgba(59,130,246,0.2)', margin: '0 auto 0.75rem' }} />
-                        <p style={{ color: '#64748b', fontSize: '0.875rem' }}>Loading rankings...</p>
+                        <p style={{ color: '#64748b', fontSize: '1rem' }}>Loading rankings...</p>
                     </div>
                 ) : error && ranks.length === 0 ? (
                     <div style={{ textAlign: 'center', padding: '4rem 0' }}>
-                        <p style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>⚠️</p>
+                        <p style={{ fontSize: '3rem', marginBottom: '0.75rem' }}>⚠️</p>
                         <p style={{ color: '#94a3b8' }}>{error}</p>
                         <button onClick={loadRanks} className="btn btn-outline" style={{ marginTop: '1rem' }}>🔄 Retry</button>
                     </div>
                 ) : ranks.length === 0 ? (
                     <div style={{ textAlign: 'center', padding: '4rem 0' }}>
-                        <p style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🔍</p>
+                        <p style={{ fontSize: '3rem', marginBottom: '0.75rem' }}>🔍</p>
                         <p style={{ color: '#94a3b8' }}>{isSearching ? 'No results found for your search' : 'No rankings available yet'}</p>
                     </div>
                 ) : (
@@ -269,7 +269,15 @@ export default function Ranks() {
                                             {ranks.map((r) => (
                                                 <tr key={r.register_id || r.user_id || r.rank} className={rankClass(r.rank)}>
                                                     <td style={{ fontWeight: 700, fontSize: '1rem' }}>{rankEmoji(r.rank)}</td>
-                                                    <td style={{ color: 'white', fontWeight: 500, fontSize: '0.8125rem' }}>{r.name}</td>
+                                                    <td style={{ color: 'white', fontWeight: 500, fontSize: '0.8125rem' }}>
+                                                        {r.team_name ? (
+                                                            <div>
+                                                                <span style={{ color: '#a78bfa', fontSize: '0.75rem', fontWeight: 600 }}>{r.team_name}</span>
+                                                                <br />
+                                                                <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>{r.name} (Leader)</span>
+                                                            </div>
+                                                        ) : r.name}
+                                                    </td>
                                                     <td style={{ fontFamily: 'monospace', color: '#60a5fa', fontSize: '0.8125rem' }}>{r.register_id}</td>
                                                     {isAllBatches && <td style={{ color: '#a78bfa', fontSize: '0.8125rem' }}>{r.batch}</td>}
                                                     <td style={{ color: '#94a3b8', fontSize: '0.8125rem', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.college}</td>
@@ -291,12 +299,19 @@ export default function Ranks() {
                                     style={{ padding: '1rem', marginBottom: '0.75rem' }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
                                         <div>
-                                            <span style={{ fontSize: '1.125rem', fontWeight: 700, marginRight: '0.5rem' }}>{rankEmoji(r.rank)}</span>
-                                            <span style={{ color: 'white', fontWeight: 600 }}>{r.name}</span>
+                                            <span style={{ fontSize: '1.25rem', fontWeight: 700, marginRight: '0.5rem' }}>{rankEmoji(r.rank)}</span>
+                                            {r.team_name ? (
+                                                <>
+                                                    <span style={{ color: '#a78bfa', fontWeight: 600 }}>{r.team_name}</span>
+                                                    <div style={{ marginLeft: '2rem', fontSize: '0.875rem', color: '#94a3b8' }}>{r.name} (Leader)</div>
+                                                </>
+                                            ) : (
+                                                <span style={{ color: 'white', fontWeight: 600 }}>{r.name}</span>
+                                            )}
                                         </div>
                                         {statusBadge(r.status)}
                                     </div>
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.375rem', fontSize: '0.8125rem' }}>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.375rem', fontSize: '0.95rem' }}>
                                         <div><span style={{ color: '#64748b' }}>ID: </span><span style={{ fontFamily: 'monospace', color: '#60a5fa' }}>{r.register_id}</span></div>
                                         <div><span style={{ color: '#64748b' }}>Score: </span><span style={{ color: 'white', fontWeight: 600 }}>{r.score}/{r.total_questions}</span></div>
                                         {isAllBatches && <div><span style={{ color: '#64748b' }}>Batch: </span><span style={{ color: '#a78bfa' }}>{r.batch}</span></div>}
@@ -311,7 +326,7 @@ export default function Ranks() {
                         {totalPages > 1 && !isSearching && (
                             <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginTop: '1.5rem' }}>
                                 <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1} className="btn btn-outline btn-sm">← Prev</button>
-                                <span style={{ display: 'flex', alignItems: 'center', fontSize: '0.875rem', color: '#64748b', padding: '0 0.75rem' }}>Page {page} of {totalPages}</span>
+                                <span style={{ display: 'flex', alignItems: 'center', fontSize: '1rem', color: '#64748b', padding: '0 0.75rem' }}>Page {page} of {totalPages}</span>
                                 <button onClick={() => setPage(p => p + 1)} disabled={page >= totalPages} className="btn btn-outline btn-sm">Next →</button>
                             </div>
                         )}
@@ -320,8 +335,10 @@ export default function Ranks() {
 
                 {/* Footer */}
                 <div style={{ marginTop: '2rem', textAlign: 'center', paddingBottom: '1rem' }}>
-                    <p style={{ fontSize: '0.75rem', color: '#475569' }}>Auto-refreshes every 30 seconds</p>
-                    <Link to="/student" style={{ fontSize: '0.875rem', color: '#60a5fa', display: 'inline-block', marginTop: '0.5rem', textDecoration: 'none' }}>← Join the Quiz</Link>
+                    <p style={{ fontSize: '0.875rem', color: '#475569' }}>Auto-refreshes every 30 seconds</p>
+                    {import.meta.env.VITE_APP_MODE !== 'ranks_only' && (
+                        <Link to="/student" style={{ fontSize: '1rem', color: '#60a5fa', display: 'inline-block', marginTop: '0.5rem', textDecoration: 'none' }}>← Join the Quiz</Link>
+                    )}
                 </div>
             </div>
         </div>

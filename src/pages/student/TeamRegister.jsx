@@ -14,6 +14,7 @@ export default function TeamRegister() {
     const [batchCode, setBatchCode] = useState('');
 
     // Team fields
+    const [teamName, setTeamName] = useState('');
     const [minSize, setMinSize] = useState(2);
     const [maxSize, setMaxSize] = useState(4);
     const [teamMembers, setTeamMembers] = useState([]);
@@ -27,7 +28,13 @@ export default function TeamRegister() {
     const [quizTitle, setQuizTitle] = useState('Quiz Challenge');
 
     useEffect(() => {
-        getQuizConfig().then(config => {
+        getQuizConfig(true).then(config => {
+            // If switched back to individual mode, redirect to individual register
+            if (config.registration_type !== 'team') {
+                navigate('/student', { replace: true });
+                return;
+            }
+
             if (config.quiz_title) setQuizTitle(config.quiz_title);
 
             const min = config.min_team_size !== undefined ? parseInt(config.min_team_size) : 0;
@@ -38,7 +45,7 @@ export default function TeamRegister() {
             // Initialize with min size
             setTeamMembers(Array.from({ length: min }, () => ({ name: '', register_id: '' })));
         });
-    }, []);
+    }, [navigate]);
 
     useEffect(() => {
         if (localStorage.getItem('student_token')) {
@@ -95,6 +102,7 @@ export default function TeamRegister() {
         if (!college.trim()) return setError('College name is required');
         if (!/^\d{10}$/.test(mobile)) return setError('Mobile must be exactly 10 digits');
         if (!batchCode.trim()) return setError('Batch code is required');
+        if (!teamName.trim()) return setError('Team name is required');
 
         for (let i = 0; i < teamMembers.length; i++) {
             if (!teamMembers[i].name.trim()) return setError(`Member ${i + 1} name is required`);
@@ -111,6 +119,7 @@ export default function TeamRegister() {
                 college,
                 mobile,
                 batch_code: batchCode,
+                team_name: teamName,
                 team_members: teamMembers,
             },
         });
@@ -124,14 +133,14 @@ export default function TeamRegister() {
             setError(data.message);
         }
         setLoading(false);
-    }, [name, registerId, college, mobile, batchCode, navigate, teamMembers]);
+    }, [name, registerId, college, mobile, batchCode, teamName, navigate, teamMembers]);
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)' }}>
+        <div className="min-h-screen flex items-center justify-center p-4 student-bg">
             <div className="w-full animate-fade-in" style={{ maxWidth: '48rem' }}>
                 {/* Header */}
                 <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4" style={{ background: 'var(--gradient-primary)' }}>
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4 shadow-lg shadow-blue-500/20" style={{ background: 'var(--gradient-primary)' }}>
                         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
                             <circle cx="9" cy="7" r="4" />
@@ -139,16 +148,23 @@ export default function TeamRegister() {
                             <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                         </svg>
                     </div>
-                    <h1 className="page-title" style={{ fontSize: '1.875rem' }}>{quizTitle}</h1>
+                    <h1 className="page-title">{quizTitle}</h1>
                     <p className="page-subtitle mt-2">Team Registration — Fill in all member details</p>
                 </div>
 
                 {/* Two-column form */}
-                <form onSubmit={handleSubmit} className="glass-card-static p-6">
+                <form onSubmit={handleSubmit} className="glass-card p-6 animate-fade-in animate-delay-200">
                     <div className="register-grid">
-                        {/* Left: Team Leader */}
+                        {/* Left: Team Leader & Team Name */}
                         <div>
-                            <h3 style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--accent-blue)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            {/* Team Name moved here */}
+                            <div style={{ marginBottom: '1rem' }}>
+                                <label className="input-label">Team Name</label>
+                                <input type="text" value={teamName} onChange={(e) => setTeamName(e.target.value)}
+                                    placeholder="Enter your team name" className="input-field" />
+                            </div>
+
+                            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--accent-blue)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                 👑 Team Leader
                             </h3>
                             <div className="space-y-4">
@@ -191,8 +207,11 @@ export default function TeamRegister() {
                         </div>
 
                         {/* Right: Team Members */}
-                        <div>
-                            <h3 style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--accent-purple)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'space-between' }}>
+                        <div className="animate-fade-in animate-delay-200" style={{ animationDelay: '400ms' }}>
+                            <div className="msg-info mb-4" style={{ fontSize: '0.9rem' }}>
+                                ℹ️ If team members are available, please enter their details below.
+                            </div>
+                            <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--accent-purple)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'space-between' }}>
                                 <span>👥 Team Members ({teamMembers.length})</span>
                                 <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>Min: {minSize} | Max: {maxSize}</span>
                             </h3>
@@ -202,7 +221,7 @@ export default function TeamRegister() {
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                                             <div className="team-member-label">Member {i + 1}</div>
                                             {teamMembers.length > minSize && (
-                                                <button type="button" onClick={() => removeMember(i)} style={{ color: '#ef4444', fontSize: '0.75rem', background: 'none', border: 'none', cursor: 'pointer' }}>
+                                                <button type="button" onClick={() => removeMember(i)} style={{ color: '#ef4444', fontSize: '0.875rem', background: 'none', border: 'none', cursor: 'pointer' }}>
                                                     Remove ✕
                                                 </button>
                                             )}
@@ -230,7 +249,7 @@ export default function TeamRegister() {
                                     <button
                                         type="button"
                                         onClick={addMember}
-                                        className="btn btn-outline btn-sm w-full"
+                                        className="btn btn-outline w-full py-3 text-base transition-all duration-300 hover:border-purple-400 hover:bg-purple-500/10 hover:shadow-[0_0_15px_rgba(168,85,247,0.3)] hover:-translate-y-0.5"
                                         style={{ borderStyle: 'dashed', marginTop: '1rem' }}
                                     >
                                         + Add Team Member
@@ -241,10 +260,10 @@ export default function TeamRegister() {
                     </div>
 
                     {/* Bottom */}
-                    <div className="mt-6 space-y-4">
+                    <div className="mt-6 space-y-4 animate-fade-in" style={{ animationDelay: '600ms' }}>
                         {error && <div className="msg-error">❌ {error}</div>}
                         <button type="submit" disabled={loading || isAvailable === false}
-                            className="btn btn-primary btn-lg w-full">
+                            className="btn btn-primary btn-lg w-full btn-shine">
                             {loading ? <><span className="spinner" /> Registering Team...</> : '🚀 Register Team & Join Quiz'}
                         </button>
                     </div>

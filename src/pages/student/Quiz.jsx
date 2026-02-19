@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import apiCall from '../../api/api';
+import DarkVeil from '../../components/backgrounds/DarkVeil';
 
 export default function Quiz() {
+    // ... (keep logic as is)
     const navigate = useNavigate();
     const [questions, setQuestions] = useState([]);
     const [sessionId, setSessionId] = useState(null);
@@ -15,6 +17,7 @@ export default function Quiz() {
     const [showWarning, setShowWarning] = useState(false);
     const [finished, setFinished] = useState(false);
     const [alreadySubmitted, setAlreadySubmitted] = useState(false);
+    const [gracePeriod, setGracePeriod] = useState(true); // Ensure gracePeriod state is kept or restored if lost
     const questionStartRef = useRef(Date.now());
     const timerRef = useRef(null);
 
@@ -40,6 +43,14 @@ export default function Quiz() {
         })();
     }, []);
 
+    // Grace period timer
+    useEffect(() => {
+        if (!loading) {
+            const timer = setTimeout(() => setGracePeriod(false), 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [loading]);
+
     // Request fullscreen on mount
     useEffect(() => {
         requestFullscreen();
@@ -47,6 +58,7 @@ export default function Quiz() {
 
     // Re-enter fullscreen when tab becomes visible again
     useEffect(() => {
+        if (loading || gracePeriod) return; // Restore grace period check
         const handler = () => {
             if (document.hidden && !finished) {
                 setTabSwitchCount(c => c + 1);
@@ -58,7 +70,7 @@ export default function Quiz() {
         };
         document.addEventListener('visibilitychange', handler);
         return () => document.removeEventListener('visibilitychange', handler);
-    }, [finished]);
+    }, [finished, loading, gracePeriod]);
 
     // Also re-enter fullscreen when exiting it (e.g., pressing Escape)
     useEffect(() => {
@@ -169,10 +181,11 @@ export default function Quiz() {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center" style={{ background: '#0f172a' }}>
-                <div className="text-center animate-fade-in">
-                    <div className="spinner spinner-lg mx-auto mb-4" style={{ borderTopColor: '#3b82f6', borderColor: 'rgba(59,130,246,0.2)' }} />
-                    <p className="text-slate-400">Loading quiz...</p>
+            <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
+                <DarkVeil />
+                <div className="text-center animate-fade-in relative z-10 glass-card p-8 rounded-2xl">
+                    <div className="spinner spinner-lg mx-auto mb-4 border-blue-500 border-t-transparent" />
+                    <p className="text-blue-200 font-medium">Loading quiz...</p>
                 </div>
             </div>
         );
@@ -181,15 +194,16 @@ export default function Quiz() {
     // Already submitted screen
     if (alreadySubmitted) {
         return (
-            <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)' }}>
-                <div className="w-full max-w-md text-center animate-fade-in">
-                    <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>✅</div>
-                    <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'white', marginBottom: '0.5rem' }}>Quiz Already Submitted</h2>
-                    <p style={{ color: '#94a3b8', fontSize: '0.875rem', marginBottom: '2rem' }}>
-                        You have already submitted this quiz. You cannot submit again.
+            <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+                <DarkVeil />
+                <div className="w-full max-w-md text-center animate-fade-in glass-card p-10 rounded-2xl border border-white/10 shadow-2xl relative z-10">
+                    <div className="text-7xl mb-6 filter drop-shadow-lg">✅</div>
+                    <h2 className="text-3xl font-bold text-white mb-2 tracking-tight">Quiz Completed</h2>
+                    <p className="text-slate-300 mb-8 leading-relaxed">
+                        You have successfully submitted this quiz. <br />You cannot attempt it again.
                     </p>
-                    <button onClick={() => navigate('/student/result')} className="btn btn-primary btn-lg" style={{ width: '100%' }}>
-                        📊 View Your Result
+                    <button onClick={() => navigate('/student/result')} className="btn btn-primary btn-lg w-full rounded-xl shadow-lg shadow-blue-500/20 btn-shine">
+                        📊 View Result
                     </button>
                 </div>
             </div>
@@ -197,31 +211,33 @@ export default function Quiz() {
     }
 
     return (
-        <div className="min-h-screen flex flex-col" style={{ background: '#0f172a' }}>
+        <div className="min-h-screen flex flex-col relative overflow-hidden">
+            <DarkVeil />
             {/* Header */}
-            <header className="flex items-center justify-between px-4 sm:px-6 py-3" style={{ borderBottom: '1px solid var(--border-color)', background: 'rgba(15, 23, 42, 0.95)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span className="badge badge-blue">Q {currentIndex + 1}/{questions.length}</span>
-                    <span style={{ color: '#64748b', fontSize: '0.75rem' }}>{answeredCount} answered</span>
+            <header className="flex items-center justify-between px-4 sm:px-6 py-3 relative z-10" style={{ borderBottom: '1px solid rgba(148, 163, 184, 0.1)', background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(12px)' }}>
+                {/* ... (Keep header content) */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <span className="badge badge-blue shadow-lg shadow-blue-500/20">Q {currentIndex + 1}/{questions.length}</span>
+                    <span className="text-slate-400 text-xs font-medium tracking-wide hidden sm:inline">{answeredCount} answered</span>
                 </div>
-                <div className="font-mono font-bold text-lg px-4 py-1.5 rounded-lg"
-                    style={{ color: timerColor, background: `${timerColor}15`, border: `1px solid ${timerColor}30` }}>
+                <div className="font-mono font-bold text-lg px-4 py-1.5 rounded-xl shadow-lg transition-colors duration-300"
+                    style={{ color: timerColor, background: `${timerColor}10`, border: `1px solid ${timerColor}20`, backdropFilter: 'blur(4px)' }}>
                     ⏱ {formatTime(timerSeconds)}
                 </div>
                 {tabSwitchCount > 0 && (
-                    <span className="badge badge-red">⚠ {tabSwitchCount} tab switch{tabSwitchCount > 1 ? 'es' : ''}</span>
+                    <span className="badge badge-red animate-pulse">⚠ {tabSwitchCount} switch{tabSwitchCount > 1 ? 'es' : ''}</span>
                 )}
             </header>
 
             {/* Progress */}
-            <div style={{ height: 4, background: '#1e293b' }}>
-                <div style={{ height: '100%', width: `${((currentIndex + 1) / questions.length) * 100}%`, background: 'var(--gradient-primary)', transition: 'width 0.5s ease' }} />
+            <div className="h-1 bg-slate-800/50 backdrop-blur-sm relative z-10 w-full">
+                <div className="h-full shadow-[0_0_10px_rgba(59,130,246,0.5)]" style={{ width: `${((currentIndex + 1) / questions.length) * 100}%`, background: 'var(--gradient-primary)', transition: 'width 0.5s ease' }} />
             </div>
 
             {/* Question */}
-            <main className="flex-1 flex items-center justify-center p-4 sm:p-6">
+            <main className="flex-1 flex items-center justify-center p-4 sm:p-6 relative z-10">
                 <div className="w-full max-w-2xl animate-fade-in" key={currentIndex}>
-                    <div className="glass-card-static p-6 sm:p-8 mb-6">
+                    <div className="glass-card p-6 sm:p-8 mb-6 relative overflow-hidden group">
                         <div className="flex items-center justify-between mb-3">
                             <p className="text-xs font-semibold text-blue-400 uppercase tracking-wider">Question {currentIndex + 1}</p>
                             <div className="flex items-center gap-2">

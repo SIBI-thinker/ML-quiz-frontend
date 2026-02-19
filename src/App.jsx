@@ -23,6 +23,21 @@ import Home from './pages/public/Home';
 import Ranks from './pages/public/Ranks';
 
 export default function App() {
+  const isRankMode = import.meta.env.VITE_APP_MODE === 'ranks_only';
+
+  if (isRankMode) {
+    return (
+      <BrowserRouter>
+        <Layout>
+          <Routes>
+            <Route path="/" element={<Ranks />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Layout>
+      </BrowserRouter>
+    );
+  }
+
   return (
     <BrowserRouter>
       <Layout>
